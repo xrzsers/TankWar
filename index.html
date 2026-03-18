@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>坦克大战 - Tank War</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            overflow: auto;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FF6600;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            color: #FFD700;
+            font-size: 0.95em;
+            text-shadow: 0 0 5px #FF6600;
+        }
+
+        .game-wrapper {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-area {
+            background: #000;
+            border: 5px solid #FFD700;
+            border-radius: 5px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.1);
+            width: 800px;
+            height: 600px;
+            position: relative;
+        }
+
+        .game-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            border-radius: 2px;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 2px;
+        }
+
+        .sidebar {
+            background: linear-gradient(135deg, rgba(30, 60, 114, 0.95), rgba(42, 82, 152, 0.95));
+            border: 3px solid #FFD700;
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 280px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            max-height: 600px;
+            overflow-y: auto;
+            color: white;
+        }
+
+        .sidebar h2 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.25em;
+            border-bottom: 2px solid #FF6600;
+            padding-bottom: 10px;
+            text-shadow: 0 0 5px #FF6600;
+        }
+
+        .info-item {
+            margin-bottom: 12px;
+            font-size: 0.95em;
+            color: #E0E0E0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .info-value {
+            color: #FFA500;
+            font-weight: bold;
+            font-size: 1.05em;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 3px solid #FF6600;
+        }
+
+        .controls h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .control-item {
+            font-size: 0.85em;
+            line-height: 1.6;
+            color: #D0D0D0;
+        }
+
+        .control-item strong {
+            color: #FFA500;
+        }
+
+        .buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 10px 16px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #1e3c72;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #3a6ab8, #2e4c92);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+            border-left: 4px solid;
+        }
+
+        .status.playing {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border-left-color: #4CAF50;
+        }
+
+        .status.gameover {
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+            border-left-color: #F44336;
+        }
+
+        .status.victory {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196F3;
+            border-left-color: #2196F3;
+        }
+
+        .menu-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            padding: 40px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.4);
+            border: 3px solid #FFD700;
+            color: white;
+        }
+
+        .modal-content h2 {
+            color: #FFD700;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 0 0 10px #FF6600;
+        }
+
+        .modal-content p {
+            color: #E0E0E0;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .difficulty-buttons button {
+            padding: 15px 20px;
+            font-size: 0.95em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 8px 0;
+            border: 1px solid #FFD700;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .game-wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                min-width: auto;
+                max-height: none;
+            }
+
+            .difficulty-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ 坦克大战 ⚔️</h1>
+            <p style="color: #ccc;">Tank War - HTML5 Canvas Game</p>
+        </div>
+
+        <div class="game-wrapper">
+            <div class="game-area">
+                <canvas id="gameCanvas" width="1000" height="800"></canvas>
+            </div>
+
+            <div class="sidebar">
+                <h2>游戏信息</h2>
+                
+                <div class="info-item">
+                    <span class="info-label">关卡:</span>
+                    <span class="info-value" id="levelInfo">1/10</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">敌坦克:</span>
+                    <span class="info-value" id="enemyCount">0/0</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">已消灭:</span>
+                    <span class="info-value" id="killCount">0</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">得分:</span>
+                    <span class="info-value" id="scoreInfo">0</span>
+                </div>
+
+                <h2 style="margin-top: 20px;">当前道具</h2>
+                <div id="powerupInfo" style="min-height: 60px; font-size: 0.9em;">
+                    <p style="color: #999;">无激活道具</p>
+                </div>
+
+                <h2 style="margin-top: 20px;">操作说明</h2>
+                <div class="controls">
+                    <div class="control-item">
+                        <strong>移动:</strong> WASD
+                    </div>
+                    <div class="control-item">
+                        <strong>转向:</strong> 方向键 ← →
+                    </div>
+                    <div class="control-item">
+                        <strong>射击:</strong> 空格
+                    </div>
+                    <div class="control-item">
+                        <strong>暂停:</strong> P
+                    </div>
+                </div>
+
+                <div class="status playing" id="gameStatus">
+                    准备开始游戏
+                </div>
+
+                <div class="buttons">
+                    <button class="btn-primary" id="startBtn">开始游戏</button>
+                    <button class="btn-secondary" id="pauseBtn">暂停</button>
+                    <button class="btn-secondary" id="resetBtn">重新开始</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主菜单 -->
+    <div class="menu-modal" id="mainMenu">
+        <div class="modal-content">
+            <h2>坦克大战</h2>
+            <p>选择游戏模式:</p>
+            <div class="modal-buttons">
+                <button class="btn-primary" id="singlePlayerBtn">单人模式</button>
+                <button class="btn-primary" id="coopBtn">双人合作</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 难度选择 -->
+    <div class="menu-modal hidden" id="difficultyMenu">
+        <div class="modal-content">
+            <h2>选择难度</h2>
+            <div class="difficulty-buttons">
+                <button class="btn-primary" id="easyBtn">简单</button>
+                <button class="btn-primary" id="normalBtn">普通</button>
+                <button class="btn-primary" id="hardBtn">困难</button>
+                <button class="btn-primary" id="hellBtn">地狱</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 胜利/失败提示 -->
+    <div class="menu-modal hidden" id="endMenu">
+        <div class="modal-content">
+            <h2 id="endTitle">游戏结束</h2>
+            <p id="endMessage">消灭敌坦克数: <span id="finalKillCount">0</span></p>
+            <p id="finalScore">最终得分: <span id="finalScoreValue">0</span></p>
+            <div class="modal-buttons">
+                <button class="btn-primary" id="nextBtn">下一关</button>
+                <button class="btn-secondary" id="menuBtn">返回菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/types.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/Vector2.js"></script>
+    <script src="js/Bullet.js"></script>
+    <script src="js/Powerup.js"></script>
+    <script src="js/Tank.js"></script>
+    <script src="js/MapGenerator.js"></script>
+    <script src="js/GameState.js"></script>
+    <script src="js/Game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
